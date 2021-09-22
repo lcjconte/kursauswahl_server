@@ -1,1 +1,1 @@
-web: ROCKET_PORT=$PORT ROCKET_KEEP_ALIVE=0 ./target/release/kursauswahl_server
+web: ROCKET_PORT=$PORT ROCKET_KEEP_ALIVE=0 ROCKET_ADDRESS=0.0.0.0 ./target/release/kursauswahl_server
