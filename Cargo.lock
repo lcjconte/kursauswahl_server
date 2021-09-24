@@ -545,6 +545,7 @@ dependencies = [
  "openssl",
  "postgres-openssl",
  "rocket",
+ "serde",
  "tokio",
  "tokio-postgres",
 ]
