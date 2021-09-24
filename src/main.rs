@@ -7,7 +7,7 @@ use rocket::{fs::NamedFile, response};
 use tokio_postgres::{NoTls};
 use std::env;
 use dotenv::dotenv;
-use openssl::ssl::{SslConnector, SslMethod};
+use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
 use postgres_openssl::MakeTlsConnector;
 
 #[get("/")]
@@ -29,7 +29,8 @@ async fn wait10() -> &'static str{
 
 #[get("/course")]
 async fn course() -> response::status::Accepted<String> {
-  let builder = SslConnector::builder(SslMethod::tls()).unwrap();
+  let mut builder = SslConnector::builder(SslMethod::tls()).unwrap();
+  builder.set_verify(SslVerifyMode::NONE);
   //builder.set_ca_file("database_cert.pem")?;
   let connector = MakeTlsConnector::new(builder.build());
   dotenv().ok();
