@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 rocket = "0.5.0-rc.1"
 tokio = { version = "1", features = ["full"] }
+dotenv = "0.15.0"
+tokio-postgres = "0.7.2"
