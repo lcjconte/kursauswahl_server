@@ -7,6 +7,8 @@ use rocket::{fs::NamedFile, response};
 use tokio_postgres::{NoTls};
 use std::env;
 use dotenv::dotenv;
+use openssl::ssl::{SslConnector, SslMethod};
+use postgres_openssl::MakeTlsConnector;
 
 #[get("/")]
 fn index() -> response::Redirect {
@@ -27,10 +29,13 @@ async fn wait10() -> &'static str{
 
 #[get("/course")]
 async fn course() -> response::status::Accepted<String> {
+  let builder = SslConnector::builder(SslMethod::tls()).unwrap();
+  //builder.set_ca_file("database_cert.pem")?;
+  let connector = MakeTlsConnector::new(builder.build());
   dotenv().ok();
   let connurl = env::var("DATABASE_URL").unwrap();
   let (client, connection) =
-    tokio_postgres::connect(&connurl, NoTls).await.unwrap();
+    tokio_postgres::connect(&connurl, connector).await.unwrap();
   tokio::spawn(async move {
     if let Err(e) = connection.await {
       eprintln!("connection error: {}", e);
