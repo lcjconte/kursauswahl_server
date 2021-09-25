@@ -10,7 +10,8 @@ CREATE TABLE courses  (
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    username varchar(40),
+    username varchar(40) UNIQUE,
+    pwdhash Binary(60),
     isAdmin bool
 );
 

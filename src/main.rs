@@ -1,27 +1,38 @@
 
 #[macro_use] extern crate rocket;
 mod routes;
-pub use crate::routes::api::lol::doit;
+mod db;
+mod localization;
+mod structures;
 
-use std::{path::Path};
-use rocket::{response};
+use std::{collections::HashMap, path::Path, path::PathBuf};
+use rocket::{fs::NamedFile, response};
+use std::sync::{Mutex, RwLock};
+use bcrypt;
+use lazy_static::lazy_static;
 
+lazy_static! {
+    static ref data: RwLock<HashMap<u128, Mutex<u32>>> = RwLock::new(HashMap::new());
+}
 
 #[get("/")]
 fn index() -> response::Redirect {
   response::Redirect::to(uri!("/welcome"))
 }
 
-#[get("/welcome")]
-async fn welcome() -> String{
-  "Please login or register".to_string()
+#[get("/scripts/<path..>")]
+async fn scripts(path: PathBuf) -> NamedFile{
+    let path = Path::new("./client/scripts/").join(path);
+    NamedFile::open(path).await.unwrap()
 }
+
 
 
 #[launch]
 fn rocket() -> _ {
-  rocket::build()
-  .mount("/testing", routes::testing::get_routes())
-  .mount("/", routes![index, welcome])
-  .mount("/files", routes::files::get_routes())
+    rocket::build()
+    .mount("/testing", routes::testing::get_routes())
+    .mount("/", routes![index/*, welcome*/,scripts])
+    .mount("/", routes::sites::get_routes())
+    .mount("/files", routes::files::get_routes())
 }

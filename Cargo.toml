@@ -6,10 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = "0.5.0-rc.1"
 tokio = { version = "1", features = ["full"] }
 dotenv = "0.15.0"
 tokio-postgres = "0.7.2"
 postgres-openssl = "0.5.0"
 openssl = "^0.10"
+bcrypt = "0.10.1"
 serde = "1.0.130"
+lazy_static = "1.4.0"
+
+[dependencies.rocket_contrib]
+version = "0.4.10"
+default-features = false
+features = ["json", "serve"]
+
+[dependencies.rocket]
+version = "0.5.0-rc.1"
+features = ["json"]
