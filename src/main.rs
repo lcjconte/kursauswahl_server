@@ -3,16 +3,16 @@
 mod routes;
 mod db;
 mod localization;
-mod structures;
-mod utils;
+mod server_logic;
+mod app_logic;
 
 use std::{collections::HashMap, path::Path, path::PathBuf};
 use rocket::{fs::NamedFile, response};
-use std::sync::{Mutex, RwLock};
+use std::sync::RwLock;
 use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref data: RwLock<HashMap<u128, i32>> = RwLock::new(HashMap::new());
+    static ref active_sessions: RwLock<HashMap<u128, i32>> = RwLock::new(HashMap::new());
 }
 
 #[get("/")]
@@ -25,11 +25,6 @@ async fn scripts(path: PathBuf) -> NamedFile{
     let path = Path::new("./client/scripts/").join(path);
     NamedFile::open(path).await.unwrap()
 }
-
-pub async fn sessione_user(secret: u128) {
-    
-}
-
 
 #[launch]
 fn rocket() -> _ {

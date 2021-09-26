@@ -1,6 +1,6 @@
-use crate::data;
+use crate::active_sessions;
 use crate::db;
-use crate::structures::User;
+use crate::server_logic::User;
 use bcrypt;
 use rand::{thread_rng, Rng};
 use rocket::http::{CookieJar, Cookie};
@@ -18,7 +18,7 @@ struct InUser<'a> {
 }
 
 pub fn get_routes() -> Vec<rocket::Route> {
-    routes![create_user, getsession, amIAdmin]
+    routes![create_user, getsession]
 }
 
 #[post("/createuser", data = "<user>")]
@@ -76,17 +76,8 @@ async fn getsession(user: Json<InUser<'_>>, cookies: &CookieJar<'_>) -> Result<J
         }
     }
     let secret: u128 = thread_rng().gen();
-    let mut wdata = data.write().unwrap();
+    let mut wdata = active_sessions.write().unwrap();
     (*wdata).insert(secret, cuser.id);
     cookies.add(Cookie::new("user_id", secret.to_string()));
     Ok(Json(secret))
-}
-
-#[get("/amIAdmin")]
-async fn amIAdmin(jar: &CookieJar<'_>) -> String{
-    let user = crate::utils::verify_user(jar).await;
-    match user {
-        Ok(u) => u.is_admin.to_string(),
-        Err(e) => e.to_string()
-    }
 }

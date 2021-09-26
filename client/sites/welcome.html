@@ -2,14 +2,14 @@
     <head>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-        <script src="./scripts/localization.js"></script>
+        <script src="./scripts/localization/localization.js"></script>
         <script>
             load({
                 "EN": {"USERNAME:": "Username:",     "LOGIN": "Login",    "REGISTER": "Register"}, 
                 "DE": {"USERNAME:": "Benutzername:", "LOGIN": "Anmelden", "REGISTER": "Registrieren"}, 
         });
         </script>
-        <script src="./scripts/langselect.js"></script>
+        <script src="./scripts/localization/langselect.js"></script>
         <script>
             async function onlogin() {
                 const res = await fetch("/api/getsession", {
@@ -17,6 +17,38 @@
                     body: JSON.stringify({"uname": document.getElementById("loginname").value, "pwd": document.getElementById("loginpwd").value})
                 });
                 window.open("../users/dashboard", "_self");
+            }
+            async function onregister() {
+                let clearField = (fname) => {
+                    document.getElementById(fname).value = "";
+                }
+                let rname = document.getElementById("registername").value;
+                let pwd1 = document.getElementById("registerpwd1").value;
+                let pwd2 = document.getElementById("registerpwd2").value;
+                let warnel = document.getElementById("registerwarn");
+                let sel = document.getElementById("registersuccess");
+                if (pwd1 != pwd2) {
+                    warnel.hidden = false;self.hidden = true;
+                    warnel.innerHTML = "Password must match!";
+                    clearField("registerpwd1");
+                    clearField("registerpwd1");
+                    return;
+                }
+                const res = await fetch("/api/createuser", {
+                    method: "POST",
+                    body: JSON.stringify({"uname": rname, "pwd": pwd1})
+                });
+                if (res.status == 202) {
+                    warnel.hidden = true;
+                    sel.hidden = false;
+                    clearField("registername");
+                    clearField("registerpwd1");
+                    clearField("registerpwd2");
+                }
+                else {
+                    warnel.innerHTML = "Registration failed!";
+                    warnel.hidden = false;sel.hidden = true;
+                }
             }
         </script>
     </head>
@@ -45,23 +77,26 @@
                         <label for="input">Password:</label>
                         <input id="loginpwd" type="password" id="input" placeholder="Password">
                     </div>
+                    <div hidden id="loginwarn" class="alert alert-danger">Warning</div>
                     <button type="button" trlKey="LOGIN" class="btn btn-primary" onclick="onlogin()">Login</button>
                 </div>
                 <div class="col">
                     <h3 trlKey="REGISTER">Register</h3>
                     <div class="row">
                         <label for="input" trlKey="USERNAME:">Username:</label>
-                        <input type="text" id="input" placeholder="Enter username">
+                        <input id="registername" type="text" id="input" placeholder="Enter username">
                     </div>
                     <div class="row">
                         <label for="input">Password:</label>
-                        <input type="password" id="input" placeholder="Password">
+                        <input id="registerpwd1" type="password" id="input" placeholder="Password">
                     </div>
                     <div class="row">
                         <label for="input">Confirm password:</label>
-                        <input type="password" id="input" placeholder="Repeat password">
+                        <input id="registerpwd2" type="password" id="input" placeholder="Repeat password">
                     </div>
-                    <button type="button" trlKey="REGISTER" class="btn btn-primary" onclick="alert('Register Placeholder')">Register</button>
+                    <div hidden id="registerwarn" class="alert alert-danger">Warning</div>
+                    <div hidden id="registersuccess" class="alert alert-success">Success!</div>
+                    <button type="button" trlKey="REGISTER" class="btn btn-primary" onclick="onregister()">Register</button>
                 </div>
             </div>
         </div>

@@ -6,7 +6,7 @@ use tokio_postgres::{Client};
 use std::error::Error;
 use std::fmt;
 
-use crate::structures::User;
+use crate::server_logic::User;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -24,7 +24,7 @@ impl fmt::Display for DBError {
 impl Error for DBError {}
 
 async fn get_url() -> Result<String>{
-    if let Err(e) = dotenv() {eprintln!("Error reading .env");}
+    if let Err(_) = dotenv() {eprintln!("Error reading .env");}
     env::var("DATABASE_URL").map_err(|op| {eprintln!("Error fetching database url");op.into()})
 }
 
