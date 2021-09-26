@@ -1,8 +1,10 @@
-use rocket::serde::{Deserialize, Serialize};
+
+use rocket::{serde::{Deserialize, Serialize}};
 
 #[derive(Deserialize, Serialize)]
 pub struct User {
+    pub id: i32,
     pub username: String,
     pub pwdhash: String,
-    pub isAdmin: bool,
+    pub is_admin: bool,
 }

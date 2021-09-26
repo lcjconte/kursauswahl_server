@@ -11,15 +11,12 @@ CREATE TABLE courses  (
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username varchar(40) UNIQUE,
-    pwdhash Binary(60),
+    pwdhash varchar(60),
     isAdmin bool
 );
 
 CREATE TABLE choices (
     id SERIAL PRIMARY KEY,
     user INTEGER FOREIGN KEY,
-    course INTEGER FOREIGN KEY,
+    course INTEGER FOREIGN KEY
 );
-
-INSERT INTO users(username, isAdmin)
-VALUES ('admin', true);

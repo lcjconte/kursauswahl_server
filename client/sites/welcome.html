@@ -10,6 +10,18 @@
         });
         </script>
         <script src="./scripts/langselect.js"></script>
+        <script>
+            function onlogin() {
+                fetch("/api/getsession", {
+                    method: "POST",
+                    body: JSON.stringify({"uname": document.getElementById("loginname").value, "pwd": document.getElementById("loginpwd").value})
+                })
+                .catch(error => {
+                    console.error('Error:', error);return;
+                });
+                window.open("../users/dashboard", "_self");
+            }
+        </script>
     </head>
     <body>
         <div class="container-xl">
@@ -30,13 +42,13 @@
                     <h3 trlKey="LOGIN">Login</h3>
                     <div class="row">
                         <label for="input" trlKey="USERNAME:">Username:</label>
-                        <input type="text" id="input" placeholder="Enter Username">
+                        <input id="loginname" type="text" id="input" placeholder="Enter Username">
                     </div>
                     <div class="row">
                         <label for="input">Password:</label>
-                        <input type="password" id="input" placeholder="Password">
+                        <input id="loginpwd" type="password" id="input" placeholder="Password">
                     </div>
-                    <button type="button" trlKey="LOGIN" class="btn btn-primary" onclick="alert('Login Placeholder')">Login</button>
+                    <button type="button" trlKey="LOGIN" class="btn btn-primary" onclick="onlogin()">Login</button>
                 </div>
                 <div class="col">
                     <h3 trlKey="REGISTER">Register</h3>

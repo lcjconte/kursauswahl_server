@@ -4,15 +4,15 @@ mod routes;
 mod db;
 mod localization;
 mod structures;
+mod utils;
 
 use std::{collections::HashMap, path::Path, path::PathBuf};
 use rocket::{fs::NamedFile, response};
 use std::sync::{Mutex, RwLock};
-use bcrypt;
 use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref data: RwLock<HashMap<u128, Mutex<u32>>> = RwLock::new(HashMap::new());
+    static ref data: RwLock<HashMap<u128, i32>> = RwLock::new(HashMap::new());
 }
 
 #[get("/")]
@@ -26,6 +26,9 @@ async fn scripts(path: PathBuf) -> NamedFile{
     NamedFile::open(path).await.unwrap()
 }
 
+pub async fn sessione_user(secret: u128) {
+    
+}
 
 
 #[launch]
@@ -35,4 +38,5 @@ fn rocket() -> _ {
     .mount("/", routes![index/*, welcome*/,scripts])
     .mount("/", routes::sites::get_routes())
     .mount("/files", routes::files::get_routes())
+    .mount("/api", routes::api::get_routes())
 }
