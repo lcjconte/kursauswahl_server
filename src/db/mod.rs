@@ -24,7 +24,7 @@ impl fmt::Display for DBError {
 impl Error for DBError {}
 
 async fn get_url() -> Result<String>{
-    if let Err(e) = dotenv() {eprintln!("Error reading .env");return Err(e.into())}
+    if let Err(e) = dotenv() {eprintln!("Error reading .env");}
     env::var("DATABASE_URL").map_err(|op| {eprintln!("Error fetching database url");op.into()})
 }
 

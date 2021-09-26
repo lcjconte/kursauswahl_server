@@ -11,13 +11,10 @@
         </script>
         <script src="./scripts/langselect.js"></script>
         <script>
-            function onlogin() {
-                fetch("/api/getsession", {
+            async function onlogin() {
+                const res = await fetch("/api/getsession", {
                     method: "POST",
                     body: JSON.stringify({"uname": document.getElementById("loginname").value, "pwd": document.getElementById("loginpwd").value})
-                })
-                .catch(error => {
-                    console.error('Error:', error);return;
                 });
                 window.open("../users/dashboard", "_self");
             }
