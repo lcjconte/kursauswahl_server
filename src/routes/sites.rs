@@ -25,8 +25,12 @@ pub async fn user_dashboard(jar: &CookieJar<'_>) -> Result<NamedFile, rocket::ht
 #[get("/admin/dashboard")]
 pub async fn admin_dashboard(jar: &CookieJar<'_>) -> Result<NamedFile, rocket::http::Status> {
     let user = verify_user(jar).await.map_err(|_| {rocket::http::Status::Forbidden})?;
-    if !user.is_admin {return Err(rocket::http::Status::Forbidden);}
-    let path = Path::new("./client/sites/admin_dashboard.html");
+    let path = if user.is_admin {
+        Path::new("./client/sites/admin_dashboard.html")
+    }
+    else {
+        Path::new("./client/sites/notadmin.html")
+    };
     NamedFile::open(path).await.map_err(|_| {rocket::http::Status::InternalServerError})
 }
 #[get("/admin/dashboard2")]

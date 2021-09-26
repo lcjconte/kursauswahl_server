@@ -81,3 +81,8 @@ async fn getsession(user: Json<InUser<'_>>, cookies: &CookieJar<'_>) -> Result<J
     cookies.add(Cookie::new("user_id", secret.to_string()));
     Ok(Json(secret))
 }
+
+//TODO: /getuser
+//TODO: Set Selection
+//TODO: get Selection
+//TODO: admin tools fetch selection
