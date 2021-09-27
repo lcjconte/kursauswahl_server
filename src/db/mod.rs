@@ -6,7 +6,7 @@ use tokio_postgres::{Client};
 use std::error::Error;
 use std::fmt;
 
-use crate::server_logic::User;
+use crate::slogic::{IUser, User};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -51,11 +51,7 @@ pub async fn get_user(uname: &str) -> Result<Option<User>> {  //DOUBLE!!
         Ok(None)
     }
     else {
-        Ok(Some(User {
-            id: rows[0].get("id"),
-            username: rows[0].get("username"), 
-            pwdhash: rows[0].get("pwdhash"),
-            is_admin: rows[0].get("isAdmin")}))
+        Ok(Some(User::new(rows[0].get("id"),rows[0].get("username"),rows[0].get("pwdhash"),rows[0].get("isAdmin"))))
     }
 }
 
@@ -68,16 +64,12 @@ pub async fn user_by_id(id: i32) -> Result<Option<User>> {
         Ok(None)
     }
     else {
-        Ok(Some(User {
-            id: rows[0].get("id"),
-            username: rows[0].get("username"), 
-            pwdhash: rows[0].get("pwdhash"),
-            is_admin: rows[0].get("isAdmin")}))
+        Ok(Some(User::new(rows[0].get("id"),rows[0].get("username"),rows[0].get("pwdhash"),rows[0].get("isAdmin"))))
     }
 }
 
-pub async fn add_user(user: User) -> Result<()>{
+pub async fn add_user(user: impl IUser) -> Result<()>{
     let client = connect().await?;
-    let changed = client.execute("INSERT INTO users VALUES (DEFAULT, $1, $2, $3)", &[&user.username, &user.pwdhash, &user.is_admin]).await?;
+    let changed = client.execute("INSERT INTO users VALUES (DEFAULT, $1, $2, $3)", &[user.username(), user.pwdhash(), &user.is_admin()]).await?;
     if changed==1 { Ok(()) } else {Err(Box::new(DBError{}))}
 }

@@ -1,6 +1,5 @@
-use crate::active_sessions;
 use crate::db;
-use crate::server_logic::User;
+use crate::slogic::{User, extract_secret, IUser, remove_session, add_session};
 use bcrypt;
 use rand::{thread_rng, Rng};
 use rocket::http::{CookieJar, Cookie};
@@ -18,7 +17,7 @@ struct InUser<'a> {
 }
 
 pub fn get_routes() -> Vec<rocket::Route> {
-    routes![create_user, getsession]
+    routes![create_user, getsession, destroysession, get_user_info]
 }
 
 #[post("/createuser", data = "<user>")]
@@ -35,12 +34,12 @@ async fn create_user(user: Json<InUser<'_>>) -> Status {
         }
     }
     let pwdhash = bcrypt::hash(user.pwd, STANDARD_COST).unwrap();
-    if let Err(e) = db::add_user(User { //?
-        id: 0,
-        username: user.uname.to_string(),
-        pwdhash: pwdhash,
-        is_admin: false,
-    })
+    if let Err(e) = db::add_user(User::new( //?
+        0,
+        user.uname,
+        &pwdhash,
+        false,
+    ))
     .await
     {
         eprintln!("{:?}", e);
@@ -64,7 +63,7 @@ async fn getsession(user: Json<InUser<'_>>, cookies: &CookieJar<'_>) -> Result<J
             }
         }
     }
-    match bcrypt::verify(user.pwd, &cuser.pwdhash) {
+    match bcrypt::verify(user.pwd, cuser.pwdhash()) {
         Ok(r) => {
             if !r {
                 return Err(Status::Forbidden);
@@ -76,13 +75,25 @@ async fn getsession(user: Json<InUser<'_>>, cookies: &CookieJar<'_>) -> Result<J
         }
     }
     let secret: u128 = thread_rng().gen();
-    let mut wdata = active_sessions.write().unwrap();
-    (*wdata).insert(secret, cuser.id);
+    add_session(cuser.id(), secret).await;
     cookies.add(Cookie::new("user_id", secret.to_string()));
     Ok(Json(secret))
 }
 
-//TODO: /getuser
-//TODO: Set Selection
-//TODO: get Selection
+#[post("/destroysession")]
+async fn destroysession(jar: &CookieJar<'_>) -> Result<Status, Status> {
+    let sid = extract_secret(jar).await.map_err(|_| {Status::BadRequest})?;
+    match remove_session(sid).await {
+        None => {Err(Status::BadRequest)},
+        Some(_) => {jar.remove(Cookie::named("user_id"));Ok(Status::Accepted)}
+    }
+}
+
+#[post("/user_info")]
+async fn get_user_info(user: User) -> Result<Json<User>, Status> {
+    Ok(Json(user))
+}
+
+//TODO: Set Selection___
+//TODO: get Selection___
 //TODO: admin tools fetch selection

@@ -1,41 +1,42 @@
-
-
-use rocket::http::CookieJar;
-use rocket::{Route, fs::NamedFile};
+use rocket::request::FlashMessage;
+use rocket::{Route, fs::NamedFile, response::{Redirect, Flash}};
 use std::path::Path;
-use crate::server_logic::{User, verify_user};
+use crate::slogic::{Admin, User, IUser};
 
 pub fn get_routes() -> Vec<Route> {
-    routes![welcome, user_dashboard, admin_dashboard, admin_dashboard2]
+    routes![welcome, user_dashboard, admin_dashboard, admin_dashboard_redir, admin_dashboard_prerr, user_dashboard_nocred]
 }
 
 #[get("/welcome")]
-pub async fn welcome() -> Result<NamedFile, rocket::http::Status>{
+pub async fn welcome(flash: Option<FlashMessage<'_>>) -> Result<NamedFile, rocket::http::Status>{
     let path = Path::new("./client/sites/welcome.html");
     NamedFile::open(path).await.map_err(|_| {rocket::http::Status::InternalServerError}) 
 }
 
 #[get("/users/dashboard")]
-pub async fn user_dashboard(jar: &CookieJar<'_>) -> Result<NamedFile, rocket::http::Status> {
-    let _user = verify_user(jar).await.map_err(|_| {rocket::http::Status::Forbidden})?;
+pub async fn user_dashboard(user: User) -> Result<NamedFile, rocket::http::Status> {
     let path = Path::new("./client/sites/user_dashboard.html");
     NamedFile::open(path).await.map_err(|_| {rocket::http::Status::InternalServerError})
 }
 
-#[get("/admin/dashboard")]
-pub async fn admin_dashboard(jar: &CookieJar<'_>) -> Result<NamedFile, rocket::http::Status> {
-    let user = verify_user(jar).await.map_err(|_| {rocket::http::Status::Forbidden})?;
-    let path = if user.is_admin {
-        Path::new("./client/sites/admin_dashboard.html")
-    }
-    else {
-        Path::new("./client/sites/notadmin.html")
-    };
-    NamedFile::open(path).await.map_err(|_| {rocket::http::Status::InternalServerError})
+#[get("/users/dashboard", rank=2)]
+async fn user_dashboard_nocred() -> Flash<Redirect> {
+    Flash::error(Redirect::to(uri!("/welcome")), "Not logged in!")
 }
-#[get("/admin/dashboard2")]
-pub async fn admin_dashboard2(user: User) -> Result<NamedFile, rocket::http::Status> {
-    if !user.is_admin {return Err(rocket::http::Status::Forbidden);}
+
+#[get("/admin/dashboard")]
+pub async fn admin_dashboard(admin: Admin) -> Result<NamedFile, Flash<Redirect>> {
     let path = Path::new("./client/sites/admin_dashboard.html");
-    NamedFile::open(path).await.map_err(|_| {rocket::http::Status::InternalServerError})
+    Ok(NamedFile::open(path).await.unwrap())
+}
+
+#[get("/admin/dashboard", rank=2)]
+pub async fn admin_dashboard_prerr(user: User) -> Result<NamedFile, Flash<Redirect>> {
+    let path = Path::new("./client/sites/notadmin.html");
+    Ok(NamedFile::open(path).await.unwrap())
+}
+
+#[get("/admin/dashboard", rank=3)]
+pub async fn admin_dashboard_redir() -> Flash<Redirect> {
+    Flash::error(Redirect::to(uri!("/welcome")), "Not logged in!") 
 }
