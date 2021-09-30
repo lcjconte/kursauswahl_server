@@ -5,31 +5,93 @@
         <script src="/scripts/localization/localization.js"></script>
         <script>
             load({
-                "EN": {"DASHBOARD": "Course selection dashboard"}, 
-                "DE": {"DASHBOARD": "Kursauswahlsoberfläche"}, 
+                "EN": {"DASHBOARD": "Course selection dashboard",
+                        "DEU": "German",
+                        "ITA": "Italian",
+                        "ENG": "English",
+                        "FRA": "French",
+                        "LAT": "Latin",
+                        "KUN": "Art",
+                        "MUS": "Music"},
+                "DE": {"DASHBOARD": "Kursauswahlsoberfläche",
+                        "DEU": "Deutsch",
+                        "ITA": "Italienisch",
+                        "ENG": "Englisch",
+                        "FRA": "Französisch", 
+                        "LAT": "Latein",
+                        "KUN": "Kunst",
+                        "MUS": "Musik"}
         });
         </script>
         <script src="/scripts/localization/langselect.js"></script>
     </head>
     <body>
-        <div class="container-xl">
-            <div class="row">
-                <div class="col">
-                    <div id="langselector" class="dropdown float-right">
-                        <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                            EN🇬🇧
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                            <li><button class="dropdown-item" type="button" onclick="select_lang('DE')">DE🇩🇪</a></li>
-                            <li><button class="dropdown-item" type="button" onclick="select_lang('IT')">IT🇮🇹</a></li>
-                            <li><button class="dropdown-item" type="button" onclick="select_lang('EN')">EN🇬🇧</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <h1 trlKey="DASHBOARD"></h1>
-            </div>
+      <div class="container-xl">
+          <div class="row">
+              <div class="col">
+                  <div id="langselector" class="dropdown float-right">
+                      <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                          EN🇬🇧
+                      </button>
+                      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                          <li><button class="dropdown-item" type="button" onclick="select_lang('DE')">DE🇩🇪</a></li>
+                          <li><button class="dropdown-item" type="button" onclick="select_lang('IT')">IT🇮🇹</a></li>
+                          <li><button class="dropdown-item" type="button" onclick="select_lang('EN')">EN🇬🇧</a></li>
+                      </ul>
+                  </div>
+              </div>
+          </div>
+          <div class="row">
+              <h1 trlKey="DASHBOARD"></h1>
+          </div>
+          <div class="row">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Aufgabenfeld I</th>
+                  <th scope="col">Wochenstundzahl</th>
+                  <th scope="col">Wahl</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row" trlKey="DEU">Deutsch</th>
+                  <td>4</td>
+                  <td><input class="form-check-input" type="checkbox" value="" id="DEU"></td>
+                </tr>
+                <tr>
+                  <th scope="row" trlKey="ITA">ITA</th>
+                  <td>4</td>
+                  <td><input class="form-check-input" type="checkbox" value="" id="ITA"></td>
+                </tr>
+                <tr>
+                  <th scope="row" trlKey="ENG">ENG</th>
+                  <td>4</td>
+                  <td><input class="form-check-input" type="checkbox" value="" id="ENG"></td>
+                </tr>
+                <tr>
+                  <th scope="row" trlKey="FRA">FRA</th>
+                  <td>4</td>
+                  <td><input class="form-check-input" type="checkbox" value="" id="FRA"></td>
+                </tr>
+                <tr>
+                  <th scope="row" trlKey="LAT">LAT</th>
+                  <td>4</td>
+                  <td><input class="form-check-input" type="checkbox" value="" id="LAT"></td>
+                </tr>
+                <tr>
+                  <th scope="row" trlKey="KUN">KUN</th>
+                  <td>2</td>
+                  <td><input class="form-check-input" type="checkbox" value="" id="KUN"></td>
+                </tr>
+                <tr>
+                  <th scope="row" trlKey="MUS">MUS</th>
+                  <td>2</td>
+                  <td><input class="form-check-input" type="checkbox" value="" id="MUS"></td>
+                </tr>                                                          
+              </tbody>
+            </table>
+          </div>
         </div>
         <script src="/scripts/util/logged.js"></script>
         <script>select_lang(lang)</script>

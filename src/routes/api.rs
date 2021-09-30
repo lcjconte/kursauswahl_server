@@ -1,83 +1,34 @@
 use crate::db;
-use crate::slogic::{User, extract_secret, IUser, remove_session, add_session};
-use bcrypt;
-use rand::{thread_rng, Rng};
+use crate::slogic::{IUser, LoginUser, User, create_session, create_user, extract_secret, remove_session};
 use rocket::http::{CookieJar, Cookie};
 use rocket::{
     http::Status,
     serde::{json::Json, Deserialize},
 };
 
-const STANDARD_COST: u32 = 6;
-
-#[derive(Deserialize)]
-struct InUser<'a> {
-    uname: &'a str,
-    pwd: &'a str,
-}
-
 pub fn get_routes() -> Vec<rocket::Route> {
-    routes![create_user, getsession, destroysession, get_user_info]
+    routes![create_user_h, getsession, destroysession, get_user_info]
 }
 
 #[post("/createuser", data = "<user>")]
-async fn create_user(user: Json<InUser<'_>>) -> Status {
-    match db::get_user(user.uname).await {
-        Err(e) => {
-            eprintln!("{:?}", e);
-            return Status::InternalServerError;
-        }
-        Ok(r) => {
-            if let Some(_) = r {
-                return Status::Conflict;
-            }
-        }
-    }
-    let pwdhash = bcrypt::hash(user.pwd, STANDARD_COST).unwrap();
-    if let Err(e) = db::add_user(User::new( //?
-        0,
-        user.uname,
-        &pwdhash,
-        false,
-    ))
-    .await
-    {
-        eprintln!("{:?}", e);
-        Status::InternalServerError
-    } else {
-        Status::Accepted
+async fn create_user_h(user: Json<LoginUser<'_>>) -> Status {
+    match create_user(user.0).await {
+        Ok(()) => Status::Accepted,
+        Err(e) => if e.to_string() == "conflict" { Status::Conflict} else {eprintln!("{:?}", e);Status::InternalServerError}
     }
 }
 
 #[post("/getsession", data = "<user>")]
-async fn getsession(user: Json<InUser<'_>>, cookies: &CookieJar<'_>) -> Result<Json<u128>, Status> {
+async fn getsession(user: Json<LoginUser<'_>>, cookies: &CookieJar<'_>) -> Result<Json<u128>, Status> {
     //Get User then verify
-    let cuser: User;
-    match db::get_user(user.uname).await {
-        Err(_) => return Err(Status::InternalServerError),
-        Ok(r) => {
-            if r.is_none() {
-                return Err(Status::Forbidden);
-            } else {
-                cuser = r.unwrap();
-            }
+    let secret = create_session(user.0).await.map_err(|e| {eprintln!("{:?}", e);Status::InternalServerError})?;
+    match secret {
+        None => Err(Status::BadRequest),
+        Some(s) => {
+            cookies.add(Cookie::new("user_id", s.to_string()));
+            Ok(Json(s))
         }
     }
-    match bcrypt::verify(user.pwd, cuser.pwdhash()) {
-        Ok(r) => {
-            if !r {
-                return Err(Status::Forbidden);
-            }
-        }
-        Err(e) => {
-            eprintln!("{:?}", e);
-            return Err(Status::InternalServerError);
-        }
-    }
-    let secret: u128 = thread_rng().gen();
-    add_session(cuser.id(), secret).await;
-    cookies.add(Cookie::new("user_id", secret.to_string()));
-    Ok(Json(secret))
 }
 
 #[post("/destroysession")]

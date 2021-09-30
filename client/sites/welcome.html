@@ -18,6 +18,12 @@
                 const parts = value.split(`; ${name}=`);
                 if (parts.length === 2) return parts.pop().split(';').shift();
             }
+            function delete_cookie( name, path, domain ) {
+                document.cookie = name + "=" +
+                ((path) ? ";path="+path:"")+
+                ((domain)?";domain="+domain:"") +
+                ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
+            }
             async function onlogin() {
                 const res = await fetch("/api/getsession", {
                     method: "POST",
@@ -115,8 +121,9 @@
     </body>
     <script>
         select_lang(lang);
-        if (getCookie("_flash") != null) {
+        if (getCookie("msgw") != null) {
             document.getElementById("loginalert").hidden = false;
+            delete_cookie("msgw", "/", "");
         }
     </script>
 </html>

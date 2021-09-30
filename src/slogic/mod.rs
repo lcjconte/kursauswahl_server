@@ -1,51 +1,23 @@
+mod UserStructs;
+pub use UserStructs::*;
 
-use rocket::{outcome::IntoOutcome, request::{FromRequest, Request}, serde::{Deserialize, Serialize}};
+use rocket::{outcome::IntoOutcome, request::{FromRequest, Request}};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 use rocket::http::CookieJar;
 use std::fmt;
+use bcrypt;
+use rand::{thread_rng, Rng};
 use crate::db;
 use std::{error::Error, fmt::Display};
+use anyhow::{Context, Result};
 
 lazy_static! {
     static ref ACTIVE_SESSIONS: RwLock<HashMap<u128, i32>> = RwLock::new(HashMap::new());
 }
-//region
-pub trait IUser {
-    fn id(&self) -> i32;
-    fn username(&self) -> &String;
-    fn pwdhash(&self) -> &String;
-    fn is_admin(&self) -> bool;
-    fn new(id: i32, username: &str, pwdhash: &str, is_admin: bool) -> Self;
-}
-#[derive(Deserialize, Serialize)]
-pub struct User {
-    id: i32,
-    username: String,
-    pwdhash: String,
-    is_admin: bool,
-}
-impl IUser for User {
-    fn id(&self) -> i32 {self.id}
-    fn username(&self) -> &String {&self.username}
-    fn pwdhash(&self) -> &String {&self.pwdhash}
-    fn is_admin(&self) -> bool {self.is_admin}
-    fn new(id: i32, username: &str, pwdhash: &str, is_admin: bool) -> Self {User {
-        id, username: username.to_string(), pwdhash: pwdhash.to_string(), is_admin}}
-}
-pub struct  Admin { //Only use for routing
-    user: User
-}
-impl IUser for Admin {
-    fn id(&self) -> i32 {self.user.id}
-    fn username(&self) -> &String {&self.user.username}
-    fn pwdhash(&self) -> &String {&self.user.pwdhash}
-    fn is_admin(&self) -> bool {self.user.is_admin}
-    fn new(id: i32, username: &str, pwdhash: &str, is_admin: bool) -> Self {Admin {user: User {
-        id, username: username.to_string(), pwdhash: pwdhash.to_string(), is_admin}}}
-}
-//endregion
+
+const STANDARD_COST: u32 = 6;
 
 #[async_trait]
 impl<'r> FromRequest<'r> for User {
@@ -63,9 +35,9 @@ impl<'r> FromRequest<'r> for Admin {
     async fn from_request(req: &'r Request<'_>) -> rocket::request::Outcome<Self, Self::Error> {
         let user = verify_user(req.cookies()).await;
         match user {
-            Err(e) => Err(TokenInvalid{}),
+            Err(_e) => Err(TokenInvalid{}),
             Ok(u) => if u.is_admin {
-                Ok(Admin::new(u.id, &u.username, &u.pwdhash, u.is_admin))
+                Ok(Admin {user: u})
             } else {
                 Err(TokenInvalid{})
             }
@@ -90,11 +62,39 @@ pub async fn extract_secret(jar: &CookieJar<'_>) -> Result<u128, Box<dyn Error>>
     Ok(user_secret)
 }
 
+pub async fn create_user(ruser: LoginUser<'_>) -> Result<()> {
+    match db::get_user(ruser.uname).await? {
+        Some(_) => {return Err(anyhow::Error::msg("Conflict"));},
+        None => {}
+    }
+    let pwdhash = bcrypt::hash(ruser.pwd, STANDARD_COST).unwrap();
+    db::add_user(&User::new( //?
+        0,
+        ruser.uname,
+        &pwdhash,
+        false,
+    )).await
+}
+
 pub async fn verify_user(jar: &CookieJar<'_>) -> Result<User, Box<dyn Error>> {
     let user_secret: u128 = extract_secret(jar).await?;
     let user_id = get_session(user_secret).await.ok_or(TokenInvalid{})?;
     let user = db::user_by_id(user_id).await?.ok_or(TokenInvalid{})?;
     Ok(user)
+}
+
+pub async fn create_session(ruser: LoginUser<'_>) -> Result<Option<u128>> {
+    let cuser: User;
+    match db::get_user(ruser.uname).await? {
+        None => {return Ok(None)},
+        Some(r) => {cuser = r;}
+    }
+    if !bcrypt::verify(ruser.pwd, &cuser.pwdhash).context("Verification error")? {
+        return Ok(None);
+    }
+    let secret: u128 = thread_rng().gen();
+    add_session(cuser.id(), secret).await;
+    Ok(Some(secret))
 }
 
 pub async fn add_session(uid: i32, sid: u128) {
