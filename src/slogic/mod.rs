@@ -1,7 +1,7 @@
 mod UserStructs;
+pub mod Uservalidation;
 pub use UserStructs::*;
 
-use rocket::{outcome::IntoOutcome, request::{FromRequest, Request}};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
@@ -19,32 +19,6 @@ lazy_static! {
 
 const STANDARD_COST: u32 = 6;
 
-#[async_trait]
-impl<'r> FromRequest<'r> for User {
-    type Error = TokenInvalid;
-     
-    async fn from_request(req: &'r Request<'_>) -> rocket::request::Outcome<Self, Self::Error> {
-        verify_user(req.cookies()).await.map_err(|_| {TokenInvalid{}}).or_forward(())
-    }
-}
-
-#[async_trait]
-impl<'r> FromRequest<'r> for Admin {
-    type Error = TokenInvalid;
-     
-    async fn from_request(req: &'r Request<'_>) -> rocket::request::Outcome<Self, Self::Error> {
-        let user = verify_user(req.cookies()).await;
-        match user {
-            Err(_e) => Err(TokenInvalid{}),
-            Ok(u) => if u.is_admin {
-                Ok(Admin {user: u})
-            } else {
-                Err(TokenInvalid{})
-            }
-        }.or_forward(())
-    }
-}
-
 #[derive(Debug)]
 pub struct TokenInvalid {
 
@@ -56,7 +30,7 @@ impl Display for TokenInvalid {
 }
 impl Error for TokenInvalid {}
 
-pub async fn extract_secret(jar: &CookieJar<'_>) -> Result<u128, Box<dyn Error>> {
+pub async fn extract_secret(jar: &CookieJar<'_>) -> Result<u128> {
     let secret_cookie = jar.get("user_id").ok_or(TokenInvalid{})?;
     let user_secret: u128 = secret_cookie.value().parse()?;
     Ok(user_secret)
@@ -76,7 +50,11 @@ pub async fn create_user(ruser: LoginUser<'_>) -> Result<()> {
     )).await
 }
 
-pub async fn verify_user(jar: &CookieJar<'_>) -> Result<User, Box<dyn Error>> {
+pub async fn update_user_pwd(user: &User, new_pwd: &str) -> Result<()>{
+    db::update_user(user.id, db::UserUpdate::Pwdhash(bcrypt::hash(new_pwd, STANDARD_COST).unwrap())).await.map(|_| {})
+}
+
+pub async fn verify_user(jar: &CookieJar<'_>) -> Result<User> {
     let user_secret: u128 = extract_secret(jar).await?;
     let user_id = get_session(user_secret).await.ok_or(TokenInvalid{})?;
     let user = db::user_by_id(user_id).await?.ok_or(TokenInvalid{})?;

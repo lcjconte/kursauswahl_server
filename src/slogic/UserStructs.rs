@@ -26,6 +26,7 @@ pub struct  Admin { //Only use for routing
     pub user: User
 }
 
+
 #[derive(Deserialize)]
 pub struct LoginUser<'a> {
     pub uname: &'a str,

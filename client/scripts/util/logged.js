@@ -1,8 +1,10 @@
 let nel = document.createElement("div");
 let logout = document.createElement("div");
+let chpwd = document.createElement("div");
 nel.className = "col";
 logout.className = "col";
-lobtn = document.createElement("button");
+chpwd.className = "col";
+lobtn = document.createElement("button"); //Add change pwd
 lobtn.onclick = async () => {
     const res = await fetch("/api/destroysession", {method: "POST"});window.open("/", "_self");
 };
